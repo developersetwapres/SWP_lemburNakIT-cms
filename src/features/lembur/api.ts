@@ -2,7 +2,8 @@ import { z } from "zod";
 import { apiClient } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import { indexIncluded, parseJsonApi, resolveRelationship } from "@/lib/jsonapi";
-import { toLemburApiParams, type LemburRequest } from "./filters";
+import { toLemburApiParams, toLemburExportParams, type LemburRequest } from "./filters";
+import { assertPdfBlob, pdfFilenameFromDisposition } from "./pdf";
 
 const attributesSchema = z.object({
   uuid: z.string(), tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -27,6 +28,7 @@ const paginationSchema = z.object({
   current_page: z.number().int().min(1), last_page: z.number().int().min(1), per_page: z.number().int().min(1).max(100),
   total: z.number().int().nonnegative(), from: z.number().int().nullable(), to: z.number().int().nullable(),
 });
+const bulkLockResultSchema = z.object({ locked_count: z.number().int().nonnegative() });
 
 export type LemburRow = z.infer<typeof attributesSchema> & {
   id: string; pegawai: z.infer<typeof employeeSchema> | null;
@@ -38,6 +40,14 @@ export type LemburList = {
   rows: LemburRow[]; filters: z.infer<typeof filtersSchema>;
   pegawaiOptions: z.infer<typeof employeeOptionSchema>[]; pagination: z.infer<typeof paginationSchema>;
 };
+export type BulkLockResult = { id: string; lockedCount: number };
+
+export function numericLemburId(id: string) {
+  if (!/^\d+$/.test(id)) throw new ApiError("Invalid lembur database identifier.", "contract");
+  const value = Number(id);
+  if (!Number.isSafeInteger(value) || value < 1) throw new ApiError("Invalid lembur database identifier.", "contract");
+  return value;
+}
 
 export function parseLemburList(input: unknown): LemburList {
   const document = parseJsonApi(input);
@@ -49,6 +59,7 @@ export function parseLemburList(input: unknown): LemburList {
   const included = indexIncluded(document);
   const rows = document.data.map((resource): LemburRow => {
     if (resource.type !== "lemburs") throw new ApiError("Invalid lembur resource.", "contract");
+    numericLemburId(resource.id);
     const attributes = attributesSchema.safeParse(resource.attributes);
     if (!attributes.success) throw new ApiError("Invalid lembur attributes.", "contract");
     const related = resolveRelationship(resource, "user", included);
@@ -80,6 +91,7 @@ export function parseLemburDetail(input: unknown): LemburDetail {
   if (!document.data || Array.isArray(document.data) || document.data.type !== "lemburs") {
     throw new ApiError("Invalid lembur detail resource.", "contract");
   }
+  numericLemburId(document.data.id);
   const attributes = attributesSchema.safeParse(document.data.attributes);
   if (!attributes.success) throw new ApiError("Invalid lembur detail attributes.", "contract");
   const included = indexIncluded(document);
@@ -89,6 +101,19 @@ export function parseLemburDetail(input: unknown): LemburDetail {
     pegawai: parseEmployeeRelationship(document.data, "user", included),
     lockedBy: parseEmployeeRelationship(document.data, "lockedBy", included),
   };
+}
+
+export function parseBulkLockResult(input: unknown): BulkLockResult {
+  const document = parseJsonApi(input);
+  if (!document.data || Array.isArray(document.data) || document.data.type !== "bulk-lock-results") {
+    throw new ApiError("Invalid bulk lock result resource.", "contract");
+  }
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(document.data.id)) {
+    throw new ApiError("Invalid bulk lock result identifier.", "contract");
+  }
+  const attributes = bulkLockResultSchema.safeParse(document.data.attributes);
+  if (!attributes.success) throw new ApiError("Invalid bulk lock result attributes.", "contract");
+  return { id: document.data.id, lockedCount: attributes.data.locked_count };
 }
 
 export async function getLemburList(filters: LemburRequest, signal?: AbortSignal) {
@@ -105,4 +130,28 @@ export async function lockLembur(uuid: string) {
   const response = await apiClient.post<unknown>(`/api/admin/lemburs/${encodeURIComponent(uuid)}/lock`);
   if (response.status === 204 || response.data === null || response.data === undefined || response.data === "") return null;
   return parseLemburDetail(response.data);
+}
+
+export async function bulkLockLemburs(ids: number[]) {
+  if (ids.length === 0 || ids.some((id) => !Number.isSafeInteger(id) || id < 1) || new Set(ids).size !== ids.length) {
+    throw new ApiError("Invalid bulk lock identifiers.", "contract");
+  }
+  const response = await apiClient.post<unknown>("/api/admin/lemburs/bulk-lock", { ids });
+  const result = parseBulkLockResult(response.data);
+  if (result.lockedCount !== ids.length) throw new ApiError("Bulk lock count does not match the request.", "contract");
+  return result;
+}
+
+export async function deleteLembur(uuid: string) {
+  const response = await apiClient.delete<unknown>(`/api/admin/lemburs/${encodeURIComponent(uuid)}`);
+  if (response.status !== 204) throw new ApiError("Invalid delete response status.", "contract");
+}
+
+export async function exportLemburs(filters: LemburRequest) {
+  const response = await apiClient.get<Blob>("/api/admin/lemburs/export", {
+    params: toLemburExportParams(filters), responseType: "blob", headers: { Accept: "application/pdf" },
+  });
+  const contentType = typeof response.headers["content-type"] === "string" ? response.headers["content-type"] : undefined;
+  const disposition = typeof response.headers["content-disposition"] === "string" ? response.headers["content-disposition"] : undefined;
+  return { blob: assertPdfBlob(response.data, contentType), filename: pdfFilenameFromDisposition(disposition) };
 }

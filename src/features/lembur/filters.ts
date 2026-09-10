@@ -32,6 +32,14 @@ export function toLemburApiParams(filters: LemburRequest): Record<string, string
   return params;
 }
 
+export function toLemburExportParams(filters: LemburRequest): Record<string, string> {
+  const params: Record<string, string> = {};
+  for (const key of ["bulan", "pegawai", "status", "jenis_hari", "search"] as const) {
+    if (filters[key]) params[key] = filters[key];
+  }
+  return params;
+}
+
 export function lemburUrl(filters: LemburRequest, changes: Partial<LemburRequest> = {}) {
   const next = { ...filters, ...changes };
   if (Object.keys(changes).some((key) => key !== "page" && key !== "per_page")) next.page = 1;

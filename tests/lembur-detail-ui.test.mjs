@@ -28,20 +28,20 @@ test("detail loading, not-found, forbidden, and generic error states stay distin
 });
 
 test("detail content renders employee, overtime, media, timestamps, wage, status, and accessible photos", () => {
-  const html = render(LemburDetailContent, { detail, action: createElement("button", null, "Lock lembur") });
+  const html = render(LemburDetailContent, { detail, lockAction: createElement("button", null, "Lock lembur") });
   for (const value of ["Informasi pegawai", "Ayu", "197001", "Staf", "Informasi lembur", "Rapat evaluasi", "Ruang rapat", "Hari kerja", "Complete", "Dokumentasi", "04 Sep 2026, 18:10", "Lock lembur"]) assert.match(html, new RegExp(value));
   assert.match(html, /Rp(?:\s|&nbsp;| )*75\.000/);
   assert.match(html, /src="https:\/\/media\.example\.invalid\/kegiatan\.jpg"/); assert.match(html, /alt="Foto kegiatan Rapat evaluasi"/);
 });
 
 test("missing photos and optional fields render as valid unavailable states", () => {
-  const html = render(LemburDetailContent, { detail: { ...detail, foto_kegiatan_url: null, foto_kegiatan_at: null, foto_pulang_url: null, foto_pulang_at: null, waktu_pulang: null, pegawai: null }, action: null });
+  const html = render(LemburDetailContent, { detail: { ...detail, foto_kegiatan_url: null, foto_kegiatan_at: null, foto_pulang_url: null, foto_pulang_at: null, waktu_pulang: null, pegawai: null } });
   assert.equal((html.match(/Foto tidak tersedia/g) ?? []).length, 2); assert.match(html, /Timestamp tidak tersedia/); assert.match(html, /Pegawai tidak tersedia/);
 });
 
 test("lock action follows backend can_lock and locked status is textual", () => {
-  const allowed = render(LemburDetailContent, { detail, action: createElement("button", null, "Lock lembur") }); assert.match(allowed, /Lock lembur/);
-  const locked = render(LemburDetailContent, { detail: { ...detail, status: "locked", can_lock: false, locked_at: "2026-09-05 08:00:00", lockedBy: { uuid: "u9", name: "Admin Satu", nip: null, jabatan: "Admin" } }, action: createElement("button", null, "Lock lembur") });
+  const allowed = render(LemburDetailContent, { detail, lockAction: createElement("button", null, "Lock lembur") }); assert.match(allowed, /Lock lembur/);
+  const locked = render(LemburDetailContent, { detail: { ...detail, status: "locked", can_lock: false, can_delete: false, locked_at: "2026-09-05 08:00:00", lockedBy: { uuid: "u9", name: "Admin Satu", nip: null, jabatan: "Admin" } }, lockAction: createElement("button", null, "Lock lembur"), deleteAction: createElement("button", null, "Hapus") });
   assert.doesNotMatch(locked, /Lock lembur/); assert.match(locked, /Locked/); assert.match(locked, /Data lembur ini sudah dikunci/); assert.match(locked, /Admin Satu/);
 });
 
