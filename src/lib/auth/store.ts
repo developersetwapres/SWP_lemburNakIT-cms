@@ -31,7 +31,13 @@ export function createAuthStore(onSessionChange: () => void = () => {}) {
       if (error.kind === "unauthorized" || error.kind === "csrf") {
         onSessionChange();
         publish(emptyState("guest", error));
-      } else publish({ ...failure(), error });
+      } else {
+        const fallback = failure();
+        // Only a rejected credential submission is a confirmed guest outcome.
+        const next = fallback.status === "guest" && error.kind !== "validation"
+          ? emptyState("error") : fallback;
+        publish({ ...next, error });
+      }
       throw error;
     }).finally(() => { pending = null; });
     publish(emptyState("loading"));
