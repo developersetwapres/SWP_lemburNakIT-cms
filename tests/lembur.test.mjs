@@ -8,7 +8,7 @@ import { lemburQueryOptions } from "../src/features/lembur/query.ts";
 
 const userResource = (id, name) => ({ type: "users", id, attributes: { uuid: `user-${id}`, name, nip: id === "7" ? "197001" : null, jabatan: "Staf" } });
 const rowResource = (id, userId, overrides = {}) => ({
-  type: "lemburs", id, attributes: { uuid: `lembur-${id}`, tanggal: "2026-09-04", nama_kegiatan: "Rapat evaluasi", lokasi_kegiatan: "Ruang rapat", jenis_hari: "hari_kerja", upah: 50000, status: "complete", waktu_pulang: "18:00", can_lock: true, can_delete: true, ...overrides },
+  type: "lemburs", id, attributes: { uuid: `lembur-${id}`, tanggal: "2026-09-04", nama_kegiatan: "Rapat evaluasi", lokasi_kegiatan: "Ruang rapat", foto_kegiatan_url: null, foto_kegiatan_at: null, foto_pulang_url: null, foto_pulang_at: null, jenis_hari: "hari_kerja", upah: 50000, status: "complete", waktu_pulang: "18:00", can_lock: true, can_delete: true, locked_at: null, ...overrides },
   relationships: { user: { data: { type: "users", id: userId } } },
 });
 const fixture = (rows = [rowResource("11", "7")]) => ({

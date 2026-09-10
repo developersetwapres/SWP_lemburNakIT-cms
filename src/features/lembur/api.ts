@@ -7,9 +7,14 @@ import { toLemburApiParams, type LemburRequest } from "./filters";
 const attributesSchema = z.object({
   uuid: z.string(), tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   nama_kegiatan: z.string(), lokasi_kegiatan: z.string(),
+  foto_kegiatan_url: z.string().nullable(),
+  foto_kegiatan_at: z.string().nullable(),
+  foto_pulang_url: z.string().nullable(),
+  foto_pulang_at: z.string().nullable(),
   jenis_hari: z.enum(["hari_kerja", "hari_libur"]),
   upah: z.number().int().nonnegative(), status: z.enum(["draft", "complete", "locked"]),
   waktu_pulang: z.string().nullable(), can_lock: z.boolean(), can_delete: z.boolean(),
+  locked_at: z.string().nullable(),
 }).passthrough();
 const employeeSchema = z.object({
   uuid: z.string(), name: z.string(), nip: z.string().nullable(), jabatan: z.string().nullable(),
@@ -25,6 +30,9 @@ const paginationSchema = z.object({
 
 export type LemburRow = z.infer<typeof attributesSchema> & {
   id: string; pegawai: z.infer<typeof employeeSchema> | null;
+};
+export type LemburDetail = LemburRow & {
+  lockedBy: z.infer<typeof employeeSchema> | null;
 };
 export type LemburList = {
   rows: LemburRow[]; filters: z.infer<typeof filtersSchema>;
@@ -53,7 +61,48 @@ export function parseLemburList(input: unknown): LemburList {
   return { rows, filters: filters.data, pegawaiOptions: options.data, pagination: pagination.data };
 }
 
+function parseEmployeeRelationship(
+  resource: Parameters<typeof resolveRelationship>[0],
+  name: string,
+  included: ReturnType<typeof indexIncluded>,
+) {
+  const related = resolveRelationship(resource, name, included);
+  if (Array.isArray(related)) throw new ApiError(`Invalid lembur ${name} relationship.`, "contract");
+  if (related && related.type !== "users") throw new ApiError(`Invalid lembur ${name} resource type.`, "contract");
+  if (!related) return null;
+  const employee = employeeSchema.safeParse(related.attributes);
+  if (!employee.success) throw new ApiError(`Invalid lembur ${name} resource.`, "contract");
+  return employee.data;
+}
+
+export function parseLemburDetail(input: unknown): LemburDetail {
+  const document = parseJsonApi(input);
+  if (!document.data || Array.isArray(document.data) || document.data.type !== "lemburs") {
+    throw new ApiError("Invalid lembur detail resource.", "contract");
+  }
+  const attributes = attributesSchema.safeParse(document.data.attributes);
+  if (!attributes.success) throw new ApiError("Invalid lembur detail attributes.", "contract");
+  const included = indexIncluded(document);
+  return {
+    id: document.data.id,
+    ...attributes.data,
+    pegawai: parseEmployeeRelationship(document.data, "user", included),
+    lockedBy: parseEmployeeRelationship(document.data, "lockedBy", included),
+  };
+}
+
 export async function getLemburList(filters: LemburRequest, signal?: AbortSignal) {
   const response = await apiClient.get<unknown>("/api/admin/lemburs", { params: toLemburApiParams(filters), signal });
   return parseLemburList(response.data);
+}
+
+export async function getLemburDetail(uuid: string, signal?: AbortSignal) {
+  const response = await apiClient.get<unknown>(`/api/admin/lemburs/${encodeURIComponent(uuid)}`, { signal });
+  return parseLemburDetail(response.data);
+}
+
+export async function lockLembur(uuid: string) {
+  const response = await apiClient.post<unknown>(`/api/admin/lemburs/${encodeURIComponent(uuid)}/lock`);
+  if (response.status === 204 || response.data === null || response.data === undefined || response.data === "") return null;
+  return parseLemburDetail(response.data);
 }

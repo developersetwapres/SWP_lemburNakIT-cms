@@ -47,4 +47,6 @@ test("sidebar marks Lembur active on its route and Dashboard inactive", () => {
   assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
   assert.match(html, /aria-current="page"[^>]*href="\/admin\/lembur"/);
   assert.doesNotMatch(html, /\/admin\/lembur\//);
+  const detail = render(Sidebar, { pathname: "/admin/lembur/11111111-1111-4111-8111-111111111111" });
+  assert.match(detail, /aria-current="page"[^>]*href="\/admin\/lembur"/);
 });
