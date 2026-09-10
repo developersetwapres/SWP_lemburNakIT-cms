@@ -8,6 +8,7 @@ registerHooks({
   resolve(specifier, context, nextResolve) {
     // Next's bundler resolves extensionless subpaths; Node ESM needs the filename.
     if (specifier === "next/link") return nextResolve("next/link.js", context);
+    if (specifier === "next/navigation") return nextResolve("next/navigation.js", context);
     if (specifier.startsWith("@/") || (specifier.startsWith(".") && context.parentURL?.startsWith("file:"))) {
       const url = specifier.startsWith("@/")
         ? new URL("../src/" + specifier.slice(2), import.meta.url)

@@ -5,8 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { DashboardSummaryContent } from "../src/features/dashboard/components/summary.tsx";
 import { DashboardLoading, DashboardError } from "../src/features/dashboard/components/states.tsx";
 import { Sidebar } from "../src/components/admin/sidebar.tsx";
-import { AdminShell } from "../src/components/admin/admin-shell.tsx";
-import { Providers } from "../src/app/providers.tsx";
+import { AdminShellContent } from "../src/components/admin/admin-shell.tsx";
 import { ApiError } from "../src/lib/api/errors.ts";
 
 const render = (component, props) => renderToStaticMarkup(createElement(component, props));
@@ -34,16 +33,17 @@ test("dashboard errors offer session recovery or explicit retry without raw diag
   }
 });
 
-test("sidebar exposes only active Dashboard and no premature business routes", () => {
+test("sidebar exposes Dashboard and Lembur without later-phase routes", () => {
   const html = render(Sidebar, {});
   assert.match(html, /href="\/admin"/); assert.match(html, /aria-current="page"/);
-  assert.doesNotMatch(html, /\/admin\/(lembur|pegawai|settings)/);
+  assert.match(html, /href="\/admin\/lembur"/);
+  assert.doesNotMatch(html, /\/admin\/(pegawai|settings)/);
 });
 
-test("shell has responsive sidebar, mobile trigger, content landmark, and provider-backed logout control", () => {
-  const html = renderToStaticMarkup(createElement(Providers, null, createElement(AdminShell, null, "CONTENT")));
+test("shell has responsive sidebar, mobile trigger, content landmark, and logout control", () => {
+  const html = render(AdminShellContent, { pathname: "/admin", authError: null, logoutDisabled: true, onLogout: () => {}, children: "CONTENT" });
   assert.match(html, /Buka navigasi admin/); assert.match(html, /md:block/); assert.match(html, /md:hidden/);
   assert.match(html, /id="admin-content"/); assert.match(html, /Keluar/); assert.match(html, /CONTENT/);
-  // Provider initializes as loading during SSR; actions must not be enabled prematurely.
+  // The shell honors the auth layer's pending state.
   assert.match(html, /disabled/);
 });
