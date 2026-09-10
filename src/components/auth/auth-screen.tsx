@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth/provider";
@@ -8,7 +8,7 @@ import { authView, type AuthOperation } from "@/lib/auth/access";
 import { AuthError, AuthLoading } from "./feedback";
 import { ChallengeForm, LoginForm } from "./forms";
 
-export function AuthScreen({ entry }: { entry: "login" | "admin" }) {
+export function AuthScreen({ entry, children }: { entry: "login" | "admin"; children?: ReactNode }) {
   const auth = useAuth();
   const router = useRouter();
   const [operation, setOperation] = useState<AuthOperation>(null);
@@ -29,6 +29,7 @@ export function AuthScreen({ entry }: { entry: "login" | "admin" }) {
   }
 
   const busy = operation !== null || auth.status === "loading";
+  if (view === "admin" && children) return children;
   const title = view === "challenge" ? "Verifikasi dua langkah"
     : view === "denied" ? "Akses ditolak"
     : view === "admin" ? "Akses admin terkonfirmasi"
