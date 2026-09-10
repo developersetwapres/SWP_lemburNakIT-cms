@@ -33,11 +33,11 @@ test("dashboard errors offer session recovery or explicit retry without raw diag
   }
 });
 
-test("sidebar exposes Dashboard and Lembur without later-phase routes", () => {
+test("sidebar exposes all implemented admin sections", () => {
   const html = render(Sidebar, {});
   assert.match(html, /href="\/admin"/); assert.match(html, /aria-current="page"/);
   assert.match(html, /href="\/admin\/lembur"/);
-  assert.doesNotMatch(html, /\/admin\/(pegawai|settings)/);
+  assert.match(html, /href="\/admin\/pegawai"/); assert.match(html, /href="\/admin\/settings"/);
 });
 
 test("shell has responsive sidebar, mobile trigger, content landmark, and logout control", () => {

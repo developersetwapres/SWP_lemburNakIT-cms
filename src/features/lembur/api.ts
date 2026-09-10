@@ -40,6 +40,7 @@ export type LemburList = {
   rows: LemburRow[]; filters: z.infer<typeof filtersSchema>;
   pegawaiOptions: z.infer<typeof employeeOptionSchema>[]; pagination: z.infer<typeof paginationSchema>;
 };
+export type LemburHistory = Omit<LemburList, "pegawaiOptions">;
 export type BulkLockResult = { id: string; lockedCount: number };
 
 export function numericLemburId(id: string) {
@@ -49,13 +50,12 @@ export function numericLemburId(id: string) {
   return value;
 }
 
-export function parseLemburList(input: unknown): LemburList {
+function parseLemburCollection(input: unknown) {
   const document = parseJsonApi(input);
   if (!Array.isArray(document.data)) throw new ApiError("Invalid lembur collection.", "contract");
   const filters = filtersSchema.safeParse(document.meta?.filters);
-  const options = z.array(employeeOptionSchema).safeParse(document.meta?.pegawaiOptions);
   const pagination = paginationSchema.safeParse(document.meta);
-  if (!filters.success || !options.success || !pagination.success) throw new ApiError("Invalid lembur list metadata.", "contract");
+  if (!filters.success || !pagination.success) throw new ApiError("Invalid lembur list metadata.", "contract");
   const included = indexIncluded(document);
   const rows = document.data.map((resource): LemburRow => {
     if (resource.type !== "lemburs") throw new ApiError("Invalid lembur resource.", "contract");
@@ -69,7 +69,19 @@ export function parseLemburList(input: unknown): LemburList {
     if (employee && !employee.success) throw new ApiError("Invalid lembur employee resource.", "contract");
     return { id: resource.id, ...attributes.data, pegawai: employee?.data ?? null };
   });
-  return { rows, filters: filters.data, pegawaiOptions: options.data, pagination: pagination.data };
+  return { rows, filters: filters.data, pagination: pagination.data };
+}
+
+export function parseLemburList(input: unknown): LemburList {
+  const parsed = parseLemburCollection(input);
+  const document = parseJsonApi(input);
+  const options = z.array(employeeOptionSchema).safeParse(document.meta?.pegawaiOptions);
+  if (!options.success) throw new ApiError("Invalid lembur employee options.", "contract");
+  return { ...parsed, pegawaiOptions: options.data };
+}
+
+export function parseLemburHistory(input: unknown): LemburHistory {
+  return parseLemburCollection(input);
 }
 
 function parseEmployeeRelationship(

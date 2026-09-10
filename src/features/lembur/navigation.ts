@@ -2,9 +2,14 @@ export const defaultLemburReturnTo = "/admin/lembur";
 
 export function safeLemburReturnTo(value: string | string[] | undefined) {
   const candidate = Array.isArray(value) ? value[0] : value;
-  return candidate === defaultLemburReturnTo || candidate?.startsWith(`${defaultLemburReturnTo}?`)
+  const employeeHistory = candidate && /^\/admin\/pegawai\/[0-9a-f-]+(?:\?[^#]*)?$/i.test(candidate);
+  return candidate === defaultLemburReturnTo || candidate?.startsWith(`${defaultLemburReturnTo}?`) || employeeHistory
     ? candidate
     : defaultLemburReturnTo;
+}
+
+export function lemburReturnLabel(returnTo: string) {
+  return returnTo.startsWith("/admin/pegawai/") ? "Kembali ke Pegawai" : "Kembali ke Lembur";
 }
 
 export function lemburDetailHref(uuid: string, returnTo = defaultLemburReturnTo) {

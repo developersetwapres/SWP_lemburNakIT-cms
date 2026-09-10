@@ -30,7 +30,7 @@ export function AdminShellContent({ children, pathname, name, authError, logoutD
   logoutDisabled: boolean; onLogout: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const pageTitle = pathname.startsWith("/admin/lembur") ? "Lembur" : "Dashboard";
+  const pageTitle = pathname.startsWith("/admin/lembur") ? "Lembur" : pathname.startsWith("/admin/pegawai") ? "Pegawai" : pathname.startsWith("/admin/settings") ? "Settings" : "Dashboard";
   return (
     <div className="min-h-svh bg-muted/30">
       <a href="#admin-content" className="sr-only z-50 rounded bg-background p-3 focus:not-sr-only focus:fixed focus:left-3 focus:top-3">Lewati ke konten</a>

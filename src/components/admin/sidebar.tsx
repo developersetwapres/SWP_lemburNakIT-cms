@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Clock3, LayoutDashboard } from "lucide-react";
+import { Clock3, LayoutDashboard, Settings, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const adminNavigation = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/lembur", label: "Lembur", icon: Clock3 },
+  { href: "/admin/pegawai", label: "Pegawai", icon: UsersRound },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;
 
 export function isAdminNavigationActive(pathname: string, href: string) {
