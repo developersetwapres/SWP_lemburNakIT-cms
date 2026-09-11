@@ -59,11 +59,12 @@ export function toHistoryApiParams(filters: PegawaiHistoryRequest) {
   return params;
 }
 
-export function pegawaiDetailUrl(uuid: string, filters: PegawaiHistoryRequest, changes: Partial<PegawaiHistoryRequest> = {}) {
+export function pegawaiDetailUrl(uuid: string, filters: PegawaiHistoryRequest, changes: Partial<PegawaiHistoryRequest> = {}, returnTo?: string) {
   const next = { ...filters, ...changes };
   if (Object.keys(changes).some((key) => key !== "page" && key !== "per_page")) next.page = 1;
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(toHistoryApiParams(next))) params.set(key, String(value));
+  if (returnTo) params.set("returnTo", returnTo);
   return params.size ? `/admin/pegawai/${encodeURIComponent(uuid)}?${params}` : `/admin/pegawai/${encodeURIComponent(uuid)}`;
 }
 

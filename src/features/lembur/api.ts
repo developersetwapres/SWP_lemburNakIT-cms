@@ -5,12 +5,17 @@ import { indexIncluded, parseJsonApi, resolveRelationship } from "@/lib/jsonapi"
 import { toLemburApiParams, toLemburExportParams, type LemburRequest } from "./filters";
 import { assertPdfBlob, pdfFilenameFromDisposition } from "./pdf";
 
+const mediaUrlSchema = z.string().refine((value) => {
+  try { return ["http:", "https:"].includes(new URL(value).protocol); }
+  catch { return false; }
+}, "Media URL must use HTTP or HTTPS.");
+
 const attributesSchema = z.object({
   uuid: z.string(), tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   nama_kegiatan: z.string(), lokasi_kegiatan: z.string(),
-  foto_kegiatan_url: z.string().nullable(),
+  foto_kegiatan_url: mediaUrlSchema.nullable(),
   foto_kegiatan_at: z.string().nullable(),
-  foto_pulang_url: z.string().nullable(),
+  foto_pulang_url: mediaUrlSchema.nullable(),
   foto_pulang_at: z.string().nullable(),
   jenis_hari: z.enum(["hari_kerja", "hari_libur"]),
   upah: z.number().int().nonnegative(), status: z.enum(["draft", "complete", "locked"]),

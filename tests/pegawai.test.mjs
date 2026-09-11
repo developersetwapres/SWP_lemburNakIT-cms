@@ -45,6 +45,8 @@ test("history uses its backend default size, supported filters, and employee rou
   const filters = parseHistorySearchParams(new URLSearchParams("bulan=2026-09&status=locked&jenis_hari=libur&search=rapat&page=2"));
   assert.deepEqual(toHistoryApiParams(filters), { bulan: "2026-09", status: "locked", jenis_hari: "libur", search: "rapat", page: 2 });
   const next = pegawaiDetailUrl(UUID, filters, { status: "complete" }); assert.match(next, new RegExp(`/admin/pegawai/${UUID}`)); assert.doesNotMatch(next, /page=2/);
+  const preserved = pegawaiDetailUrl(UUID, filters, { page: 3 }, "/admin/pegawai?status=active&page=2");
+  assert.equal(new URL(preserved, "https://cms.example.test").searchParams.get("returnTo"), "/admin/pegawai?status=active&page=2");
   assert.equal(hasActiveHistoryFilters({ page: 1, per_page: 10 }), false);
 });
 

@@ -54,6 +54,7 @@ test("malformed detail documents fail as contract errors", () => {
     (body) => { body.data = [body.data]; },
     (body) => { body.data.type = "users"; },
     (body) => { body.data.attributes.status = "unknown"; },
+    (body) => { body.data.attributes.foto_kegiatan_url = "javascript:alert(1)"; },
     (body) => { delete body.data.attributes.can_lock; },
     (body) => { body.data.relationships.user.data.type = "teams"; },
   ]) {
