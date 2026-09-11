@@ -68,7 +68,7 @@ export function LemburDetailPage({ uuid, returnTo }: { uuid: string; returnTo: s
   };
 
   return <div className="space-y-5">
-    <Button render={<Link href={returnTo} />} variant="ghost" className="min-h-11"><ArrowLeft aria-hidden="true" /> {lemburReturnLabel(returnTo)}</Button>
+    <Button nativeButton={false} render={<Link href={returnTo} />} variant="ghost" className="min-h-11"><ArrowLeft aria-hidden="true" /> {lemburReturnLabel(returnTo)}</Button>
     {success && <p role="status" className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"><CircleCheck aria-hidden="true" className="size-4 shrink-0" />{success}</p>}
     <LemburDetailContent detail={detail} lockAction={<LockDialog open={dialogOpen} pending={mutation.isPending} error={mutationError} onOpenChange={changeDialog} onConfirm={confirmLock} />} deleteAction={<DeleteLemburAction detail={detail} returnTo={returnTo} />} />
   </div>;

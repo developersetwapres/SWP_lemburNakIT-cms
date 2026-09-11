@@ -32,7 +32,7 @@ export function PegawaiDetailPage({ uuid, returnTo }: { uuid: string; returnTo: 
   const historyError = history.error ? normalizeApiError(history.error) : null;
   const navigate = (href: string) => router.push(href, { scroll: false });
   return <div className="space-y-6">
-    <Button render={<Link href={returnTo} />} variant="ghost" className="min-h-11"><ArrowLeft aria-hidden="true" /> Kembali ke Pegawai</Button>
+    <Button nativeButton={false} render={<Link href={returnTo} />} variant="ghost" className="min-h-11"><ArrowLeft aria-hidden="true" /> Kembali ke Pegawai</Button>
     {searchParams.get("notice") === "deleted" && <p role="status" className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">Data lembur berhasil dihapus.</p>}
     <section className="rounded-xl border bg-card p-5 shadow-sm"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Detail pegawai</p><h1 className="mt-2 text-2xl font-semibold tracking-tight">{detail.data.name}</h1></div><span className={`w-fit rounded-full px-2.5 py-1 text-xs font-medium ${detail.data.is_active ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-700"}`}>{detail.data.is_active ? "Aktif" : "Tidak aktif"}</span></div><dl className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4"><Value label="Email" value={detail.data.email} /><Value label="NIP" value={detail.data.nip} /><Value label="Jabatan" value={detail.data.jabatan} /><Value label="Kode biro" value={detail.data.kode_biro} /></dl></section>
     <PegawaiEditForm key={`${detail.data.uuid}-${detail.data.name}-${detail.data.is_active}`} pegawai={detail.data} />
