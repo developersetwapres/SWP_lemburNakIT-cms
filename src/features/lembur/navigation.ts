@@ -1,8 +1,18 @@
 export const defaultLemburReturnTo = "/admin/lembur";
+export const lemburDetailPath = "/admin/lembur/detail";
+
+function isPegawaiDetailReturn(candidate: string) {
+  try {
+    const url = new URL(candidate, "https://cms.invalid");
+    return url.origin === "https://cms.invalid" && url.pathname === "/admin/pegawai/detail" && Boolean(url.searchParams.get("uuid"));
+  } catch {
+    return false;
+  }
+}
 
 export function safeLemburReturnTo(value: string | string[] | undefined) {
   const candidate = Array.isArray(value) ? value[0] : value;
-  const employeeHistory = candidate && /^\/admin\/pegawai\/[0-9a-f-]+(?:\?[^#]*)?$/i.test(candidate);
+  const employeeHistory = candidate && isPegawaiDetailReturn(candidate);
   return candidate === defaultLemburReturnTo || candidate?.startsWith(`${defaultLemburReturnTo}?`) || employeeHistory
     ? candidate
     : defaultLemburReturnTo;
@@ -13,8 +23,8 @@ export function lemburReturnLabel(returnTo: string) {
 }
 
 export function lemburDetailHref(uuid: string, returnTo = defaultLemburReturnTo) {
-  const params = new URLSearchParams({ returnTo: safeLemburReturnTo(returnTo) });
-  return `${defaultLemburReturnTo}/${encodeURIComponent(uuid)}?${params}`;
+  const params = new URLSearchParams({ uuid, returnTo: safeLemburReturnTo(returnTo) });
+  return `${lemburDetailPath}?${params}`;
 }
 
 export function lemburReturnTo(pathname: string, searchParams: URLSearchParams) {

@@ -2,6 +2,7 @@ import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { AxiosError } from "axios";
 import { apiClient } from "../src/lib/api/client.ts";
+import { clearCsrfToken } from "../src/lib/api/csrf.ts";
 import { ApiError, normalizeApiError } from "../src/lib/api/errors.ts";
 import { parseJsonApi, indexIncluded, resolveRelationship } from "../src/lib/jsonapi/index.ts";
 import { bootstrapCsrf, login, challengeTwoFactor, getFrontendContext, getPasswordConfirmationStatus, confirmPassword } from "../src/lib/auth/service.ts";
@@ -18,7 +19,7 @@ function respond(handler) {
   apiClient.defaults.adapter = async (config) => {
     requests.push(config);
     const result = await handler(config);
-    return { data: result?.data ?? "", status: result?.status ?? 200, statusText: "", headers: {}, config };
+    return { data: result?.data ?? "", status: result?.status ?? 200, statusText: "", headers: result?.headers ?? {}, config };
   };
 }
 function fail(status, data = { message: "Rejected" }) {
@@ -28,6 +29,7 @@ beforeEach(() => {
   // Adapter tests simulate the browser entry point; they do not simulate browser cookies.
   globalThis.window = {};
   process.env.NEXT_PUBLIC_API_URL = "https://api.example.invalid";
+  clearCsrfToken();
   requests = [];
   respond(() => ({}));
 });
@@ -43,6 +45,16 @@ test("client centralizes environment, JSON and credential/XSRF configuration", a
   assert.equal(request.xsrfCookieName, "XSRF-TOKEN");
   assert.equal(request.xsrfHeaderName, "X-XSRF-TOKEN");
   assert.equal(request.headers.Accept, "application/json");
+});
+
+test("cross-site CSRF response header is kept in memory and sent on Fortify login", async () => {
+  respond((config) => config.url === "/sanctum/csrf-cookie"
+    ? { headers: { "x-csrf-token": "csrf-header-token" } }
+    : { data: { two_factor: false } });
+
+  await login(credentials);
+
+  assert.equal(requests[1].headers.get("X-CSRF-TOKEN"), "csrf-header-token");
 });
 test("missing environment, invalid origin, absolute URL and server use fail before transport", async () => {
   delete process.env.NEXT_PUBLIC_API_URL;

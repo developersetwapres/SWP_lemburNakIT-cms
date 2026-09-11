@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { apiClient } from "../api/client";
+import { setCsrfToken } from "../api/csrf";
 import { ApiError } from "../api/errors";
 import { parseJsonApi, resourceSchema } from "../jsonapi";
 
@@ -18,7 +19,9 @@ export type TwoFactorPayload = { code: string; recovery_code?: never } | { recov
 let csrfRequest: Promise<void> | null = null;
 export function bootstrapCsrf(): Promise<void> {
   if (!csrfRequest) {
-    csrfRequest = apiClient.get("/sanctum/csrf-cookie").then(() => undefined).finally(() => { csrfRequest = null; });
+    csrfRequest = apiClient.get("/sanctum/csrf-cookie").then((response) => {
+      setCsrfToken(response.headers["x-csrf-token"]);
+    }).finally(() => { csrfRequest = null; });
   }
   return csrfRequest;
 }

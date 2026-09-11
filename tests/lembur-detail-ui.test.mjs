@@ -56,5 +56,5 @@ test("confirmation explains final lock, exposes cancel/confirm, errors, and pend
 test("list links to UUID detail and keeps the full filtered return URL", () => {
   const list = { rows: [detail], filters: { bulan: "2026-09", pegawai: null, status: "complete", jenis_hari: "semua", search: "" }, pegawaiOptions: [], pagination: { current_page: 2, last_page: 2, per_page: 15, total: 16, from: 16, to: 16 } };
   const html = render(LemburTable, { list, updating: false, returnTo: "/admin/lembur?bulan=2026-09&status=complete&page=2" });
-  assert.match(html, /href="\/admin\/lembur\/11111111-1111-4111-8111-111111111111\?returnTo=/); assert.match(html, /page%3D2/);
+  assert.match(html, /href="\/admin\/lembur\/detail\?uuid=11111111-1111-4111-8111-111111111111&amp;returnTo=/); assert.match(html, /page%3D2/);
 });

@@ -1,5 +1,6 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 import { ApiError, normalizeApiError } from "./errors";
+import { getCsrfToken } from "./csrf";
 
 function apiBaseUrl(): string {
   const value = process.env.NEXT_PUBLIC_API_URL?.trim();
@@ -29,6 +30,11 @@ apiClient.interceptors.request.use((config) => {
     throw new ApiError("Use a relative API endpoint beginning with a single slash.", "configuration");
   }
   config.baseURL = apiBaseUrl();
+  const method = config.method?.toUpperCase() ?? "GET";
+  const csrfToken = getCsrfToken();
+  if (csrfToken && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+    config.headers = AxiosHeaders.from(config.headers).set("X-CSRF-TOKEN", csrfToken);
+  }
   return config;
 });
 apiClient.interceptors.response.use((response) => response, (error: unknown) => Promise.reject(normalizeApiError(error)));

@@ -68,7 +68,7 @@ test("detail route and API use UUID while return navigation accepts only the lem
   await getLemburDetail(UUID);
   assert.equal(requests[0].url, `/api/admin/lemburs/${UUID}`);
   const href = lemburDetailHref(UUID, "/admin/lembur?bulan=2026-09&page=2");
-  assert.match(href, new RegExp(`/admin/lembur/${UUID}`)); assert.match(href, /returnTo=%2Fadmin%2Flembur%3Fbulan%3D2026-09%26page%3D2/);
+  assert.match(href, /\/admin\/lembur\/detail\?/); assert.equal(new URL(href, "https://cms.example.test").searchParams.get("uuid"), UUID); assert.match(href, /returnTo=%2Fadmin%2Flembur%3Fbulan%3D2026-09%26page%3D2/);
   assert.equal(safeLemburReturnTo("https://evil.example.invalid"), defaultLemburReturnTo);
 });
 

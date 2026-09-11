@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import type { PegawaiList } from "../api";
 
 function detailHref(uuid: string, returnTo: string) {
-  return `/admin/pegawai/${encodeURIComponent(uuid)}?${new URLSearchParams({ returnTo })}`;
+  return `/admin/pegawai/detail?${new URLSearchParams({ uuid, returnTo })}`;
 }
 
 export function PegawaiTable({ list, updating, returnTo }: { list: PegawaiList; updating: boolean; returnTo: string }) {

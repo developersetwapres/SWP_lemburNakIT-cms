@@ -19,7 +19,7 @@ test("pegawai list UI renders search, status, responsive table, detail UUID and 
   const filters = render(PegawaiListFilters, { initial: {}, disabled: false, onApply: () => {}, onReset: () => {} }); assert.match(filters, /Nama, NIP, jabatan, atau kode biro/); assert.match(filters, /Tidak aktif/); assert.match(filters, /Reset/);
   const table = render(PegawaiTable, { list, updating: false, returnTo: "/admin/pegawai?status=active&page=2" });
   for (const value of ["Ayu", "197001", "Staf", "UMUM", "Aktif", "4"]) assert.match(table, new RegExp(value));
-  assert.match(table, new RegExp(`/admin/pegawai/${UUID}`)); assert.match(table, /returnTo=/); assert.match(table, /overflow-x-auto/);
+  assert.match(table, /\/admin\/pegawai\/detail\?/); assert.match(table, new RegExp(`uuid=${UUID}`)); assert.match(table, /returnTo=/); assert.match(table, /overflow-x-auto/);
   assert.match(render(PegawaiPagination, { pagination, disabled: false, onPage: () => {} }), /Halaman 1 dari 2/);
 });
 
@@ -33,7 +33,7 @@ test("pegawai loading, empty/not-found, and errors remain distinct", () => {
 test("history renders filters, empty-capable list, pagination and existing Lembur detail link", () => {
   const filters = render(HistoryFilters, { initial: { page: 1, per_page: 10 }, disabled: false, onApply: () => {}, onReset: () => {} }); assert.match(filters, /type="month"/); assert.match(filters, /Cari kegiatan\/lokasi/);
   const html = render(PegawaiHistoryTable, { history, updating: false, returnTo: `/admin/pegawai/${UUID}?bulan=2026-09`, onPage: () => {} });
-  assert.match(html, /Rapat/); assert.match(html, new RegExp("/admin/lembur/22222222-2222-4222-8222-222222222222")); assert.match(html, /Pagination riwayat lembur/);
+  assert.match(html, /Rapat/); assert.match(html, /\/admin\/lembur\/detail\?uuid=22222222-2222-4222-8222-222222222222/); assert.match(html, /Pagination riwayat lembur/);
 });
 
 test("sidebar exposes Pegawai and marks nested detail active", () => {
